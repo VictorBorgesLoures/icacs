@@ -1,5 +1,5 @@
 import { ChangeEvent, Component, FormEvent } from "react";
-import enums from '../../../components/enums';
+import enums, {InterfaceCapitulo, InterfaceSecao} from '../../../components/enums';
 
 interface AppState  {
     versao: {
@@ -11,14 +11,6 @@ interface AppState  {
         disabled: boolean
     },
     secao: {
-        value: string,
-        disabled: boolean
-    },
-    descricao: {
-        value: string,
-        disabled: boolean
-    },
-    level: {
         value: string,
         disabled: boolean
     }
@@ -41,76 +33,76 @@ export default class Requisitos extends Component<any, AppState> {
             secao: {
                 value: "",
                 disabled: true
-            },
-            descricao: {
-                value: "",
-                disabled: false
-            },
-            level: {
-                value: "",
-                disabled: true
             }
         };
     }
 
-    setVersao(event: ChangeEvent) {
+    setVersao(event: ChangeEvent): void {
         event.preventDefault();
-        this.setState({versao: {
-            ...this.state.versao,
-            value: event.currentTarget.value
-        },
-        capitulo: {
-            value:"",
-            disabled: false
-        },
-        level: {
-            value:"",
-            disabled: false
-        },
-        secao: {
-            value:"",
-            disabled: false
+        if(event.currentTarget.value) {
+            this.setState({versao: {
+                ...this.state.versao,
+                value: event.currentTarget.value
+            },
+            capitulo: {
+                value:"",
+                disabled: false
+            }
+            });
+        } else {
+            this.setState({
+                capitulo: {
+                    value:"",
+                    disabled: true
+                },
+                secao: {
+                    value: "",
+                    disabled: true
+                },
+                versao: {
+                ...this.state.versao,
+                value: event.currentTarget.value
+                }          
+            
+            });
         }
-        });
     }
 
-    setLevel(event: ChangeEvent) {
+    setCapitulo(event: ChangeEvent): void {
         event.preventDefault();
-        this.setState({level: {
-            ...this.state.level,
-            value: event.currentTarget.value
+        if(event.currentTarget.value) {
+            this.setState({capitulo: {
+                ...this.state.capitulo,
+                value: event.currentTarget.value
+            },
+            secao: {
+                value:"",
+                disabled: false
+            }
+            });
+        }else {
+            this.setState({capitulo: {
+                ...this.state.capitulo,
+                value: event.currentTarget.value
+            },
+            secao: {
+                value:"",
+                disabled: true
+            }
+            });
         }
-        });
-    }
-
-    buildLevel() {
-        if(this.state.versao.value) {
-            return enums[this.state.versao.value].level.map((e, index) => {
-                return <option key={"level-"+index} value={e}>{e}</option>
-            })
-        }
-        return <></>;
-    }   
-
-    setCapitulo(event: ChangeEvent) {
-        event.preventDefault();
-        this.setState({capitulo: {
-            ...this.state.capitulo,
-            value: event.currentTarget.value
-        }
-        });
     }
 
     buildCapitulo() {
         if(this.state.versao.value) {
-            return enums[this.state.versao.value].capitulo.map((e, index) => {
-                return <option key={"level-"+index} value={e}>{e}</option>
+            return enums[this.state.versao.value].capitulo.map((e: InterfaceCapitulo , index: number) => {
+                return <option key={"level-"+index} value={e.nome}>{e.nome}</option>
             })
         }
-        return <></>;
+        return <></> ;
     }
 
-    setSecao(event: ChangeEvent) {
+    setSecao(event: ChangeEvent): void {
         event.preventDefault();
         this.setState({secao: {
             ...this.state.secao,
@@ -121,23 +113,49 @@ export default class Requisitos extends Component<any, AppState> {
 
     buildSecao() {
         if(this.state.versao.value) {
-            return enums[this.state.versao.value].secao.map((e, index) => {
-                return <option key={"level-"+index} value={e}>{e}</option>
-            })
+            return enums[this.state.versao.value].capitulo.map((e: InterfaceCapitulo, index: number) => {
+                if(e.nome == this.state.capitulo.value) {
+                    return e.secao.map((e: InterfaceSecao , index: number) => {
+                        return <option key={"level-"+index} value={e.nome}>{e.nome}</option>
+                    })
+                }
+            });
         }
         return <></>;
     }
 
-    setDescricao(event: ChangeEvent) {
-        event.preventDefault();
-        this.setState({descricao: {...this.state.descricao,
-            value: event.currentTarget.value
-        }});
+    buildRequisitosTableData() {
+        if(this.state.secao.value) {
+            return enums[this.state.versao.value].capitulo.map((e: InterfaceCapitulo, index: number) => {
+                if(e.nome == this.state.capitulo.value) {
+                    return e.secao.map((item: InterfaceSecao , index: number) => {
+                        if(item.nome == this.state.secao.value) {
+                            return item.requisito.map((v: string , index: number) => {
+                                return <tr key={"tr-"+index}>
+                                    <td key={"td-"+index}>{v}</td>
+                                </tr>
+                            })
+                        }
+                    })
+                }
+            });
+        }
+        return <></>;
     }
 
-    handleSubmit(e: FormEvent) {
-        e.preventDefault();
-        console.log(this.state);
+    buildRequisitos() {
+        return (
+            <table className="table">
+                <thead>
+                    <tr>
+                    <th scope="col">Lista dos Requisitos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {this.buildRequisitosTableData()}
+                </tbody>
+                </table>
+        )
     }
 
     render() {
@@ -149,18 +167,12 @@ export default class Requisitos extends Component<any, AppState> {
         return (<>
             <h1>Requisitos</h1>
             <div className="container">
-                <h2>Requisitos</h2>
-                <form className="form" onSubmit={event => this.handleSubmit(event)}>
-                    <div className="mb-3">
-                        <label htmlFor="descricao" className="form-label">Descricao:</label>
-                        <input type="text" className="form-control" value={this.state.descricao.value} onChange={event => this.setDescricao(event)} id="descricao" placeholder="Digite a descrição" />
-                    </div>
+                <h2>Listar Requisitos</h2>
                     <div className="mb-3">     
                         <label htmlFor="versao" className="form-label">Versao:</label>
                         <select className="form-select" id="versao" value={this.state.versao.value} onChange={event => this.setVersao(event)} disabled={this.state.versao.disabled}>
-                            <option value="0">Selecionar</option>
+                            <option value="">Selecionar</option>
                             {
-                                
                                 versoes.map((v, index) => {
                                     return <option value={v} key={"capitulo-"+index}>{v}</option>
                                 })
@@ -170,27 +182,18 @@ export default class Requisitos extends Component<any, AppState> {
                     <div className="mb-3">     
                         <label htmlFor="capitulo" className="form-label">Capitulo:</label>
                         <select className="form-select" id="capitulo" value={this.state.capitulo.value} onChange={event => this.setCapitulo(event)} disabled={this.state.capitulo.disabled}>
-                            <option value="0">Selecionar</option>
+                            <option value="">Selecionar</option>
                             {this.buildCapitulo()}
-                        </select>
-                    </div>
-                    <div className="mb-3">
-                        <label htmlFor="level" className="form-label">Level:</label>
-                        <select className="form-select" id="level" value={this.state.level.value} onChange={event => this.setLevel(event)} disabled={this.state.level.disabled}>
-                            <option value="0">Selecionar</option>
-                            {this.buildLevel()}
                         </select>
                     </div>
                     <div className="mb-3">
                         <label htmlFor="secao" className="form-label">Secao:</label>
                         <select className="form-select" value={this.state.secao.value} onChange={event => this.setSecao(event)} disabled={this.state.secao.disabled}>
-                            <option value="0">Selecionar</option>
+                            <option value="">Selecionar</option>
                             {this.buildSecao()}
                         </select>
                     </div>
-                    
-                    <button type="submit" className="btn btn-info">Enviar</button>
-                </form>
+                    {this.buildRequisitos()}
             </div>
         </>)
     }
